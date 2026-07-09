@@ -6,6 +6,7 @@ import { todayUtc } from "@/lib/dates";
 import { toJsonColumn, type RunStatus, type RunTrigger } from "@/lib/db/json";
 import { ensureAdaptersRegistered } from "@/lib/providers/register";
 import { FETCH_STEPS } from "./steps";
+import { maintenanceStep, metricsStep, scoresStep } from "./compute-steps";
 import type {
   PipelineStep,
   RefreshSummary,
@@ -33,11 +34,19 @@ export interface RefreshOptions {
  *  - one failing step never prevents later steps from running;
  *  - every run is persisted as an UpdateRun row (status RUNNING -> final).
  */
+/** Full daily pipeline: fetch everything, then derive, score, rank, prune. */
+export const DEFAULT_PIPELINE: PipelineStep[] = [
+  ...FETCH_STEPS,
+  metricsStep,
+  scoresStep,
+  maintenanceStep,
+];
+
 export async function runRefresh(opts: RefreshOptions): Promise<RefreshSummary> {
   ensureAdaptersRegistered();
   const db = opts.db ?? prisma;
   const asOf = opts.asOf ?? todayUtc();
-  const allSteps = opts.pipeline ?? FETCH_STEPS;
+  const allSteps = opts.pipeline ?? DEFAULT_PIPELINE;
   const selected = opts.steps
     ? allSteps.filter((s) => opts.steps!.includes(s.name))
     : allSteps;
@@ -57,6 +66,7 @@ export async function runRefresh(opts: RefreshOptions): Promise<RefreshSummary> 
       id: true,
       ticker: true,
       sector: true,
+      industry: true,
       country: true,
       cik: true,
       isIndex: true,

@@ -72,12 +72,17 @@ describe("refresh pipeline (scratch SQLite, mock chain)", () => {
       "fundamentals",
       "filings",
       "news",
+      "metrics",
+      "scores",
+      "maintenance",
     ]);
-    for (const step of steps) {
+    const fetchSteps = steps.slice(0, 5);
+    for (const step of fetchSteps) {
       expect(step.status).toBe("SUCCESS");
       expect(step.providers).toEqual(["mock"]);
       expect(step.items).toBeGreaterThan(0);
     }
+    expect(steps.every((s) => s.status === "SUCCESS")).toBe(true);
     // Mock served everything (healthy); csv legitimately failed first in the
     // chain (no import files present) and its failures are tracked.
     const health = await tdb.db.providerHealth.findMany();
@@ -154,6 +159,9 @@ describe("refresh pipeline (scratch SQLite, mock chain)", () => {
         "fundamentals",
         "filings",
         "news",
+        "metrics",
+        "scores",
+        "maintenance",
       ]);
     } finally {
       await scratch.cleanup();

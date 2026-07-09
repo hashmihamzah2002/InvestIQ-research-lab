@@ -33,6 +33,7 @@ export interface CompanyRow {
   id: string;
   ticker: string;
   sector: string;
+  industry: string;
   country: string;
   cik: string | null;
   isIndex: boolean;

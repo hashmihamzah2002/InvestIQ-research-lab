@@ -136,6 +136,8 @@ model MetricSnapshot {
   earningsVolatility Float? // stdev of YoY quarterly EPS growth
   fcfConsistency     Float? // share of recent periods with positive FCF, 0..1
   sentiment90d       Float? // mean news sentiment over trailing 90d, -1..1
+  // Monthly trailing-P/E history [{date, pe}] for compression-risk scoring
+  peHistoryJson      String?
   // Per-field provenance: { fieldName: { source, asOf } }
   dataQualityJson    String?
   company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
