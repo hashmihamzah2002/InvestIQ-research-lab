@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+dev.db
+dev.db-journal
+*.test.db
+coverage
+data/imports/*
+!data/imports/.gitkeep
+.env
+.claude
+docs
+README.md

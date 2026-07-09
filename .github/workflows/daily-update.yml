@@ -1,0 +1,73 @@
+name: Daily data refresh
+
+# Refreshes the database once per trading day (after US close) and uploads
+# the resulting SQLite snapshot as an artifact.
+#
+# Modes (no code changes needed):
+#  - Zero secrets  -> full pipeline on deterministic mock data (proves the
+#    pipeline + scoring end to end, keylessly).
+#  - Provider secrets set (SEC_EDGAR_USER_AGENT, FRED_API_KEY, ...) -> the
+#    same run pulls REAL data through the provider chains; anything that
+#    fails falls through toward mock and the run reports PARTIAL instead of
+#    crashing.
+#
+# For a persistent production database (hosted Postgres + always-on app),
+# schedule `npm run refresh` next to the app instead — see docs/DEPLOYMENT.md.
+
+on:
+  schedule:
+    - cron: "30 21 * * 1-5" # 21:30 UTC, Mon-Fri (after US market close)
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "file:./daily.db"
+      # Optional provider credentials — absent secrets simply disable adapters.
+      SEC_EDGAR_USER_AGENT: ${{ secrets.SEC_EDGAR_USER_AGENT }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+      LOG_FORMAT: json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Migrate + seed
+        run: |
+          npx prisma migrate deploy
+          npm run seed
+
+      - name: Refresh (fetch -> metrics -> scores -> ranks -> snapshot)
+        id: refresh
+        run: |
+          set -o pipefail
+          npm run refresh | tee refresh.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Daily refresh"
+            echo ""
+            echo '```'
+            grep -A 20 "^STEP" refresh.log || echo "no step table found"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload database snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: investiq-db-${{ github.run_id }}
+          path: daily.db
+          retention-days: 14

@@ -1,0 +1,41 @@
+# Optional Docker setup. `docker compose up` serves the app on :3000 with the
+# SQLite database on a named volume. Run `docker compose run --rm refresher`
+# from host cron / Task Scheduler for scheduled updates. docs/DEPLOYMENT.md
+# covers the PostgreSQL variant.
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - investiq-db:/app/data-db
+      - ./data/imports:/app/data/imports
+    environment:
+      DATABASE_URL: "file:/app/data-db/investiq.db"
+      # Optional provider credentials (set in a .env file next to this compose file):
+      SEC_EDGAR_USER_AGENT: ${SEC_EDGAR_USER_AGENT:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY:-}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+      FMP_API_KEY: ${FMP_API_KEY:-}
+    restart: unless-stopped
+
+  # One-shot refresh job sharing the same database volume:
+  #   docker compose run --rm refresher
+  refresher:
+    build: .
+    profiles: ["refresh"]
+    volumes:
+      - investiq-db:/app/data-db
+      - ./data/imports:/app/data/imports
+    environment:
+      DATABASE_URL: "file:/app/data-db/investiq.db"
+      SEC_EDGAR_USER_AGENT: ${SEC_EDGAR_USER_AGENT:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY:-}
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+      FMP_API_KEY: ${FMP_API_KEY:-}
+    command: ["npm", "run", "refresh"]
+
+volumes:
+  investiq-db:
