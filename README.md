@@ -1,5 +1,7 @@
 # InvestIQ Research Lab
 
+[![CI](https://github.com/hashmihamzah2002/InvestIQ-research-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/hashmihamzah2002/InvestIQ-research-lab/actions/workflows/ci.yml)
+
 An **educational** stock research platform that ranks a fixed 30-company
 universe with a transparent, fully explainable scoring model — and works out
 of the box with **zero API keys**.
