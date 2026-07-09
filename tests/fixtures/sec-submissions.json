@@ -1,0 +1,19 @@
+{
+  "cik": 320193,
+  "name": "Test Corp",
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0000320193-26-000055",
+        "0000320193-26-000044",
+        "0000320193-26-000033",
+        "0000320193-25-000123"
+      ],
+      "form": ["8-K", "10-Q", "NT 10-Q", "10-K"],
+      "filingDate": ["2026-05-20", "2026-05-02", "2026-04-28", "2025-11-01"],
+      "primaryDocument": ["form8k.htm", "form10q.htm", "nt10q.htm", "form10k.htm"],
+      "primaryDocDescription": ["8-K", "10-Q", "NT 10-Q", "10-K"],
+      "items": ["4.02,9.01", "", "", ""]
+    }
+  }
+}

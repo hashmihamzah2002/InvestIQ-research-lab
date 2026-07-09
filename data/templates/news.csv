@@ -1,0 +1,3 @@
+ticker,publishedAt,title,url,source,summary,sentiment
+TESTCO,2026-06-09,TESTCO quarterly results review,https://example.com/news/testco-q1-review,Example Wire,Revenue in line with guidance; margins steady.,0.2
+TESTCO,2026-06-10,TESTCO announces supply agreement,https://example.com/news/testco-supply,Example Wire,Multi-year supply agreement signed.,0.4

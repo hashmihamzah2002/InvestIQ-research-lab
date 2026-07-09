@@ -1,0 +1,54 @@
+{
+  "cik": 320193,
+  "entityName": "Test Corp",
+  "facts": {
+    "us-gaap": {
+      "Revenues": {
+        "units": {
+          "USD": [
+            { "start": "2024-01-01", "end": "2024-12-31", "val": 40000000000, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" },
+            { "start": "2025-01-01", "end": "2025-03-31", "val": 10500000000, "fy": 2025, "fp": "Q1", "form": "10-Q", "filed": "2025-05-05" },
+            { "start": "2024-01-01", "end": "2024-06-30", "val": 19000000000, "fy": 2024, "fp": "Q2", "form": "10-Q", "filed": "2024-08-05" }
+          ]
+        }
+      },
+      "NetIncomeLoss": {
+        "units": {
+          "USD": [
+            { "start": "2024-01-01", "end": "2024-12-31", "val": 6000000000, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" },
+            { "start": "2025-01-01", "end": "2025-03-31", "val": 1600000000, "fy": 2025, "fp": "Q1", "form": "10-Q", "filed": "2025-05-05" }
+          ]
+        }
+      },
+      "EarningsPerShareDiluted": {
+        "units": {
+          "USD/shares": [
+            { "start": "2024-01-01", "end": "2024-12-31", "val": 6.0, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" }
+          ]
+        }
+      },
+      "Assets": {
+        "units": {
+          "USD": [
+            { "end": "2024-12-31", "val": 60000000000, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" },
+            { "end": "2025-03-31", "val": 61000000000, "fy": 2025, "fp": "Q1", "form": "10-Q", "filed": "2025-05-05" }
+          ]
+        }
+      },
+      "StockholdersEquity": {
+        "units": {
+          "USD": [
+            { "end": "2024-12-31", "val": 25000000000, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" }
+          ]
+        }
+      },
+      "NetCashProvidedByUsedInOperatingActivities": {
+        "units": {
+          "USD": [
+            { "start": "2024-01-01", "end": "2024-12-31", "val": 9000000000, "fy": 2024, "fp": "FY", "form": "10-K", "filed": "2025-02-20" }
+          ]
+        }
+      }
+    }
+  }
+}

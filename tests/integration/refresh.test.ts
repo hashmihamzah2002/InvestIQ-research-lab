@@ -78,10 +78,14 @@ describe("refresh pipeline (scratch SQLite, mock chain)", () => {
       expect(step.providers).toEqual(["mock"]);
       expect(step.items).toBeGreaterThan(0);
     }
-    // Mock served everything, so provider health shows healthy mock rows.
+    // Mock served everything (healthy); csv legitimately failed first in the
+    // chain (no import files present) and its failures are tracked.
     const health = await tdb.db.providerHealth.findMany();
-    expect(health.length).toBeGreaterThan(0);
-    expect(health.every((h) => h.provider === "mock" && h.consecutiveFailures === 0)).toBe(true);
+    const mockRows = health.filter((h) => h.provider === "mock");
+    expect(mockRows.length).toBeGreaterThan(0);
+    expect(mockRows.every((h) => h.consecutiveFailures === 0 && h.lastSuccessAt)).toBe(true);
+    const csvRows = health.filter((h) => h.provider === "csv");
+    expect(csvRows.every((h) => h.consecutiveFailures > 0)).toBe(true);
   });
 
   it("is idempotent — re-running the same day adds no duplicate rows", async () => {

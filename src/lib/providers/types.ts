@@ -1,6 +1,7 @@
 import type { Env } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import type { ProviderCategory } from "@/lib/db/json";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 /**
  * Provider abstraction. Each data category has an interface; adapters
@@ -131,6 +132,11 @@ export interface ProviderContext {
   log: Logger;
   /** Reference date for generators/incremental fetches; defaults to today. */
   asOf: Date;
+  /**
+   * Database handle used ONLY for the ApiCache table (response caching).
+   * Adapters must not touch any other model.
+   */
+  db?: PrismaClient;
 }
 
 export interface ProviderBase {

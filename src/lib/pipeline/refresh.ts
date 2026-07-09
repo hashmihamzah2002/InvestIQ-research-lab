@@ -4,6 +4,7 @@ import { getEnv } from "@/lib/config/env";
 import { log } from "@/lib/logging/logger";
 import { todayUtc } from "@/lib/dates";
 import { toJsonColumn, type RunStatus, type RunTrigger } from "@/lib/db/json";
+import { ensureAdaptersRegistered } from "@/lib/providers/register";
 import { FETCH_STEPS } from "./steps";
 import type {
   PipelineStep,
@@ -33,6 +34,7 @@ export interface RefreshOptions {
  *  - every run is persisted as an UpdateRun row (status RUNNING -> final).
  */
 export async function runRefresh(opts: RefreshOptions): Promise<RefreshSummary> {
+  ensureAdaptersRegistered();
   const db = opts.db ?? prisma;
   const asOf = opts.asOf ?? todayUtc();
   const allSteps = opts.pipeline ?? FETCH_STEPS;
@@ -65,7 +67,7 @@ export async function runRefresh(opts: RefreshOptions): Promise<RefreshSummary> 
   const ctx: StepContext = {
     db,
     companies,
-    provider: { env: getEnv(), log: runLog, asOf },
+    provider: { env: getEnv(), log: runLog, asOf, db },
     tickerFilter: opts.tickers?.length
       ? new Set(opts.tickers.map((t) => t.toUpperCase()))
       : undefined,
