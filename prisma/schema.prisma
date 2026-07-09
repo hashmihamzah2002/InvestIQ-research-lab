@@ -169,6 +169,21 @@ model ScoreSnapshot {
   @@index([date])
 }
 
+// Provider-supplied forward-looking metrics (estimates), kept separate from
+// derived MetricSnapshot so the metrics step stays a pure computation.
+model KeyMetricsSnapshot {
+  id               String   @id @default(cuid())
+  companyId        String
+  asOf             DateTime
+  forwardPe        Float?
+  forwardGrowth    Float?
+  epsRevisionTrend Float?
+  dividendYield    Float?
+  source           String
+
+  @@unique([companyId, asOf])
+}
+
 // One SEC (or mock/CSV) filing.
 model Filing {
   id          String   @id @default(cuid())
