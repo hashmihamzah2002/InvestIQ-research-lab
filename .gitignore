@@ -52,3 +52,6 @@ dev.db-journal
 # CSV import drop folder (templates in data/templates ARE committed)
 /data/imports/*
 !/data/imports/.gitkeep
+
+# personal notes — never committed
+/notes/

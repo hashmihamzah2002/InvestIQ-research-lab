@@ -9,6 +9,27 @@ of the box with **zero API keys**.
 > personalized recommendation. Data may be delayed, incomplete, or simulated.
 > See the in-app Methodology and Data Sources pages.
 
+## Screenshots
+
+**Dashboard** — rankings, valuation risks, macro tiles, filing/news alerts,
+freshness banner; every datum badged with its source:
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Score breakdown** — the core idea: every factor's raw input → normalized
+score → weight → contribution, with guard notes. No black box:
+
+![Score breakdown](docs/screenshots/score-breakdown.png)
+
+**Screener** — 18 filters across fundamentals, valuation, and model scores:
+
+![Screener](docs/screenshots/screener.png)
+
+**Backtest** — the model replayed over history with as-of scoring (no
+look-ahead), transaction costs, and a prominent limitations panel:
+
+![Backtest](docs/screenshots/backtest.png)
+
 ## What it does
 
 - **Data pipeline** — pulls prices, fundamentals, SEC filings, macro
@@ -103,7 +124,32 @@ round-trips, backtest engine fixtures, report generation, and the banned-phrase
 compliance scan. Network smoke tests against real SEC EDGAR run only with
 `LIVE_SMOKE=1`.
 
+## How this was built
+
+I ([Ahmed Hamzah Hashmi](https://github.com/hashmihamzah2002)) designed and
+directed this project; the implementation was AI-assisted using
+[Claude Code](https://claude.com/claude-code). Concretely, my side of the work:
+
+- **Product & methodology design** — the five-pillar scoring model (weights,
+  factor selection, the rule that insufficient data forces a "Watchlist"
+  rating), the fixed 30-company universe, and the requirement that every score
+  be traceable from raw input to final rating.
+- **Compliance requirements** — educational-only framing, banned promissory
+  language enforced by an automated test, source + timestamp attribution on
+  every displayed metric, portfolio concentration warnings, and no
+  brokerage/trading functionality of any kind.
+- **Build direction & acceptance** — a reviewed architecture plan up front,
+  then ten phases delivered against it, each gated on a green
+  lint + typecheck + test run; I reviewed outputs and made the calls when
+  trade-offs came up (e.g. SQLite over Postgres for zero-setup Windows dev,
+  honest mock-data badging over fake realism).
+
+The commit history reflects this honestly — commits carry a
+`Co-Authored-By: Claude` trailer. I think directing AI tooling well is a
+skill worth demonstrating, and this repo is my evidence.
+
 ## License / usage note
 
-Educational project. Free-tier data APIs are generally licensed for personal,
-non-commercial use — review each provider's terms before any other use.
+MIT — see [LICENSE](LICENSE). Educational project. Free-tier data APIs are
+generally licensed for personal, non-commercial use — review each provider's
+terms before any other use.
