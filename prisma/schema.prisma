@@ -1,0 +1,307 @@
+// InvestIQ Research Lab — database schema.
+//
+// Portability rules (SQLite today, PostgreSQL via 1-line datasource change):
+//  - No Prisma enums (unsupported on SQLite). String columns hold uppercase
+//    union values validated by Zod in src/lib/db/json.ts.
+//  - No Json columns. *Json String fields hold serialized JSON parsed through
+//    typed helpers in src/lib/db/json.ts.
+//  - All DateTime values are UTC.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// A listed company in the research universe. Index proxies (e.g. SPY) are
+// stored as Company rows with isIndex=true so price plumbing is uniform.
+model Company {
+  id              String   @id @default(cuid())
+  ticker          String   @unique
+  name            String
+  sector          String
+  industry        String
+  exchange        String
+  country         String
+  cik             String? // SEC CIK, zero-padded 10 digits; null for non-SEC filers
+  description     String?
+  website         String?
+  isIndex         Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  // Curated illustrative profile driving the deterministic mock generators
+  // (drift, volatility, margins, leverage...). See MockProfileSchema.
+  mockProfileJson String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  priceBars       PriceBar[]
+  fundamentals    FundamentalsPeriod[]
+  metricSnapshots MetricSnapshot[]
+  scoreSnapshots  ScoreSnapshot[]
+  filings         Filing[]
+  newsItems       NewsItem[]
+  watchlistItem   WatchlistItem?
+  positions       Position[]
+}
+
+// One daily OHLCV bar.
+model PriceBar {
+  id        String   @id @default(cuid())
+  companyId String
+  date      DateTime
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  adjClose  Float
+  volume    Float
+  source    String // provider name: mock | csv | finnhub | alpha-vantage | ...
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+  @@index([date])
+}
+
+// As-reported financial statement data for one fiscal period.
+model FundamentalsPeriod {
+  id                 String    @id @default(cuid())
+  companyId          String
+  periodEnd          DateTime
+  periodType         String // ANNUAL | QUARTERLY
+  revenue            Float?
+  grossProfit        Float?
+  operatingIncome    Float?
+  netIncome          Float?
+  eps                Float?
+  sharesOut          Float?
+  totalAssets        Float?
+  totalLiabilities   Float?
+  totalEquity        Float?
+  cash               Float?
+  totalDebt          Float?
+  currentAssets      Float?
+  currentLiabilities Float?
+  ebitda             Float?
+  operatingCashFlow  Float?
+  capex              Float? // negative = cash outflow convention NOT used; stored as positive spend
+  dividendsPaid      Float? // stored as positive payout
+  interestExpense    Float?
+  reportedAt         DateTime? // first public availability; backtests add lag when null
+  source             String
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, periodEnd, periodType])
+  @@index([companyId, periodType, periodEnd])
+}
+
+// Derived point-in-time metrics for one company (output of the metrics step).
+model MetricSnapshot {
+  id                 String   @id @default(cuid())
+  companyId          String
+  asOf               DateTime
+  price              Float?
+  marketCap          Float?
+  pe                 Float?
+  forwardPe          Float?
+  peg                Float?
+  evToEbitda         Float?
+  priceToSales       Float?
+  fcfYield           Float?
+  dividendYield      Float?
+  grossMargin        Float?
+  operatingMargin    Float?
+  netMargin          Float?
+  roe                Float?
+  roa                Float?
+  debtToEquity       Float?
+  netDebtToEbitda    Float?
+  interestCoverage   Float?
+  currentRatio       Float?
+  revenueGrowthYoY   Float?
+  revenueCagr3y      Float?
+  epsGrowthYoY       Float?
+  forwardGrowth      Float? // analyst forward estimate when a provider supplies one
+  marginExpansion    Float? // TTM operating margin minus prior-year TTM
+  return1m           Float?
+  return3m           Float?
+  return6m           Float?
+  return12m          Float?
+  relReturn1m        Float? // vs index proxy
+  relReturn3m        Float?
+  relReturn6m        Float?
+  relReturn12m       Float?
+  earningsVolatility Float? // stdev of YoY quarterly EPS growth
+  fcfConsistency     Float? // share of recent periods with positive FCF, 0..1
+  sentiment90d       Float? // mean news sentiment over trailing 90d, -1..1
+  // Per-field provenance: { fieldName: { source, asOf } }
+  dataQualityJson    String?
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, asOf])
+  @@index([asOf])
+}
+
+// Output of the scoring engine for one company on one date.
+model ScoreSnapshot {
+  id            String   @id @default(cuid())
+  companyId     String
+  date          DateTime
+  valuationScore Float?
+  qualityScore   Float?
+  growthScore    Float?
+  momentumScore  Float?
+  riskScore      Float? // safety orientation: 100 = low risk
+  overallScore   Float
+  coverage       Float // 0..1 share of factor weight backed by data
+  rating         String // STRONG_CANDIDATE | CANDIDATE | WATCHLIST | AVOID
+  ratingReason   String
+  rank           Int?
+  sectorRank     Int?
+  // Full explainability tree: pillars -> factors with raw value, normalized
+  // score, weight, contribution, availability, notes, applied overrides.
+  breakdownJson  String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+  @@index([date])
+}
+
+// One SEC (or mock/CSV) filing.
+model Filing {
+  id          String   @id @default(cuid())
+  companyId   String
+  accessionNo String   @unique
+  form        String // 10-K, 10-Q, 8-K, 40-F, 6-K, NT 10-K...
+  filedAt     DateTime
+  title       String?
+  url         String
+  // Red flags detected at ingest, e.g. ["ITEM_4_02"], ["LATE_FILING"]
+  flagsJson   String   @default("[]")
+  source      String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, filedAt])
+  @@index([filedAt])
+}
+
+// One news/research snippet.
+model NewsItem {
+  id          String   @id @default(cuid())
+  companyId   String
+  publishedAt DateTime
+  title       String
+  url         String
+  source      String? // publication name
+  summary     String?
+  sentiment   Float? // -1..1
+  provider    String // adapter that supplied it
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, url])
+  @@index([companyId, publishedAt])
+  @@index([publishedAt])
+}
+
+// Macro series definition (FRED-style).
+model MacroIndicator {
+  id           String             @id @default(cuid())
+  seriesId     String             @unique // e.g. FEDFUNDS, CPI_YOY, UNRATE, DGS10
+  name         String
+  unit         String // percent | index | billions-usd ...
+  description  String?
+  observations MacroObservation[]
+}
+
+model MacroObservation {
+  id          String         @id @default(cuid())
+  indicatorId String
+  date        DateTime
+  value       Float
+  source      String
+  indicator   MacroIndicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@unique([indicatorId, date])
+  @@index([date])
+}
+
+// Single-user watchlist (no auth in v1; see ROADMAP).
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  companyId String   @unique
+  note      String?
+  addedAt   DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+// Hypothetical paper portfolio — weights only, no brokerage linkage.
+model Portfolio {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  positions   Position[]
+}
+
+model Position {
+  id          String    @id @default(cuid())
+  portfolioId String
+  companyId   String
+  weightPct   Float // hypothetical allocation, 0..100; portfolio sum <= 100 (rest = cash)
+  note        String?
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, companyId])
+}
+
+// One execution of the refresh pipeline (cron, manual or seed).
+model UpdateRun {
+  id         String    @id @default(cuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  trigger    String // CRON | MANUAL | SEED | API
+  status     String // RUNNING | SUCCESS | PARTIAL | FAILED
+  // Array of step results: { name, status, provider?, items?, error?, durationMs }
+  stepsJson  String    @default("[]")
+  notes      String?
+
+  @@index([startedAt])
+}
+
+// Rolling health per (provider, category) pair.
+model ProviderHealth {
+  id                  String    @id @default(cuid())
+  provider            String
+  category            String // market-data | fundamentals | filings | news | macro
+  lastSuccessAt       DateTime?
+  lastErrorAt         DateTime?
+  lastError           String?
+  consecutiveFailures Int       @default(0)
+
+  @@unique([provider, category])
+}
+
+// External API response cache (keyed by provider+endpoint+params hash).
+model ApiCache {
+  key       String   @id
+  payload   String
+  fetchedAt DateTime
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+// Result record of a CSV import.
+model ImportJob {
+  id         String   @id @default(cuid())
+  kind       String // prices | fundamentals | filings | news | macro
+  filename   String
+  rowsOk     Int
+  rowsFailed Int
+  errorsJson String   @default("[]")
+  createdAt  DateTime @default(now())
+}
