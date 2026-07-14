@@ -58,6 +58,10 @@ import type { PillarKey } from "@/lib/scoring/types";
 
 export const metadata: Metadata = { title: "Methodology" };
 
+// Rendered per-request so the shared layout reflects runtime flags
+// (DEMO_MODE nav) instead of being frozen at build time.
+export const dynamic = "force-dynamic";
+
 /**
  * IMPORTANT: every number on this page is imported from
  * src/lib/scoring/constants.ts — the exact values the engine uses. There is

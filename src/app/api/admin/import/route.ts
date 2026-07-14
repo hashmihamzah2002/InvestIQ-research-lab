@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { jsonError } from "@/lib/api";
+import { getEnv } from "@/lib/config/env";
 import { prisma } from "@/lib/db/client";
 import { log } from "@/lib/logging/logger";
 import { importCsv } from "@/lib/pipeline/import-csv";
@@ -12,6 +13,10 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 /** POST multipart/form-data: kind=<category>, file=<csv>. */
 export async function POST(request: Request): Promise<NextResponse> {
+  // Demo hardening: reject before touching the body.
+  if (getEnv().DEMO_MODE === 1) {
+    return jsonError(403, "Admin operations are disabled on this public demo instance.");
+  }
   let form: FormData;
   try {
     form = await request.formData();

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { getEnv } from "@/lib/config/env";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <TooltipProvider>
-          <SiteHeader />
+          <SiteHeader showAdmin={getEnv().DEMO_MODE !== 1} />
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
             {children}
           </main>

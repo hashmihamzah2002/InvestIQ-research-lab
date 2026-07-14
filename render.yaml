@@ -1,0 +1,24 @@
+# Render blueprint — one-click public demo of InvestIQ Research Lab.
+# Deploy: https://render.com/deploy?repo=https://github.com/hashmihamzah2002/InvestIQ-research-lab
+#
+# Free-plan notes (documented trade-offs for a portfolio demo):
+#  - The instance spins down after ~15 idle minutes; the first visit after
+#    that cold-starts in well under a minute because demo data is baked into
+#    the image at build time (no on-boot seeding).
+#  - The filesystem is ephemeral: visitor watchlist/portfolio edits reset on
+#    redeploy — acceptable for a demo, stated on the admin lock page.
+#  - DEMO_MODE=1 hides the Admin console and 403s all /api/admin routes.
+#  - Optional freshness: add a nightly deploy hook (docs/DEPLOYMENT.md §2a)
+#    so the baked data and its "last refresh" stamp rebuild every day.
+services:
+  - type: web
+    name: investiq-research-lab
+    runtime: docker
+    plan: free
+    autoDeployTrigger: commit
+    healthCheckPath: /
+    envVars:
+      - key: DEMO_MODE
+        value: "1"
+      - key: LOG_FORMAT
+        value: json

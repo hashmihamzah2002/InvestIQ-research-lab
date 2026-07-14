@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Lock, XCircle } from "lucide-react";
+import { getEnv } from "@/lib/config/env";
 import { ComplianceNotice } from "@/components/compliance-notice";
 import { FreshnessBanner } from "@/components/freshness-banner";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,39 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Admin & Data Quality" };
 
 export default async function AdminPage() {
+  // Public-demo hardening: the console stays home-lab only.
+  if (getEnv().DEMO_MODE === 1) {
+    return (
+      <div className="mx-auto max-w-xl space-y-4 py-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Lock className="size-4" /> Admin console disabled on this demo
+            </CardTitle>
+            <CardDescription className="leading-relaxed">
+              This is a public, read-mostly demo instance: data refresh
+              triggers and CSV imports are turned off, and the dataset resets
+              on redeploy. To explore the admin &amp; data-quality console —
+              pipeline runs, provider health, the coverage matrix, imports —
+              run the project locally with one command (
+              <code className="font-mono">npm run setup</code>); see the{" "}
+              <a
+                className="underline underline-offset-4"
+                href="https://github.com/hashmihamzah2002/InvestIQ-research-lab#quickstart-windows-11-macos-or-linux"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                README quickstart
+              </a>
+              .
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <ComplianceNotice kind="data" />
+      </div>
+    );
+  }
+
   const data = await getAdminOverview();
   const latestRun = data.runs[0];
 

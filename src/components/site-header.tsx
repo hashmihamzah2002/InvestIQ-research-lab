@@ -16,8 +16,9 @@ const NAV_LINKS = [
   { href: "/admin", label: "Admin" },
 ] as const;
 
-export function SiteHeader() {
+export function SiteHeader({ showAdmin = true }: { showAdmin?: boolean }) {
   const pathname = usePathname();
+  const links = NAV_LINKS.filter((l) => showAdmin || l.href !== "/admin");
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -30,7 +31,7 @@ export function SiteHeader() {
           Educational — not advice
         </Badge>
         <nav className="ml-auto flex items-center gap-1 overflow-x-auto">
-          {NAV_LINKS.map((link) => {
+          {links.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"

@@ -3,6 +3,12 @@
 # size-optimized standalone build: this is a self-hosted research tool, and
 # keeping prisma + tsx in the image lets the container migrate/seed/refresh
 # itself. See docs/DEPLOYMENT.md.
+#
+# Demo data is BAKED at build time (migrate + seed + mock refresh), so a
+# fresh container serves a fully populated app in seconds — important on
+# free hosts that cold-start on every wake (e.g. Render). The start command
+# still self-heals: if the database is empty (e.g. a fresh compose volume
+# mounted over /app/data-db), it reseeds before serving.
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
@@ -11,9 +17,11 @@ COPY prisma ./prisma
 RUN npm ci
 
 COPY . .
-ENV DATABASE_URL="file:/app/data-db/build.db"
+ENV DATABASE_URL="file:/app/data-db/investiq.db"
 RUN mkdir -p /app/data-db \
   && npx prisma migrate deploy \
+  && npm run seed \
+  && npm run refresh \
   && npm run build
 
 FROM node:22-bookworm-slim
@@ -22,8 +30,8 @@ ENV NODE_ENV=production
 ENV DATABASE_URL="file:/app/data-db/investiq.db"
 
 COPY --from=build /app ./
-RUN rm -rf /app/data-db && mkdir -p /app/data-db
 
 EXPOSE 3000
-# First start: migrate, seed, and load data if the volume is empty; then serve.
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run seed && npm run refresh && npm run start"]
+# Self-healing start: migrate (no-op on the baked DB), reseed only if the
+# database is empty, then serve. `next start` binds $PORT when set (Render).
+CMD ["sh", "-c", "npx prisma migrate deploy && (npx tsx scripts/db-has-data.ts || (npm run seed && npm run refresh)) && npm run start"]

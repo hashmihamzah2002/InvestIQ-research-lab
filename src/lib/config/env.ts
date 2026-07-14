@@ -44,6 +44,13 @@ const EnvSchema = z.object({
 
   /** Set to "1" to enable network-touching smoke tests (SEC EDGAR). */
   LIVE_SMOKE: z.string().optional(),
+
+  /**
+   * Public-demo hardening: 1 hides the Admin page and returns 403 from all
+   * /api/admin routes (refresh triggers, CSV imports). Set on hosted demos
+   * where anonymous visitors must not mutate the dataset.
+   */
+  DEMO_MODE: z.coerce.number().default(0),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

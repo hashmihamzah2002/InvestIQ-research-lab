@@ -19,6 +19,10 @@ import { MACRO_CATALOG } from "@/lib/macro/catalog";
 
 export const metadata: Metadata = { title: "Data Sources & Limitations" };
 
+// Rendered per-request so the shared layout reflects runtime flags
+// (DEMO_MODE nav) instead of being frozen at build time.
+export const dynamic = "force-dynamic";
+
 const PROVIDERS: {
   name: string;
   categories: string;

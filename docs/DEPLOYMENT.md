@@ -36,7 +36,42 @@ docker compose up --build
 
 The image intentionally ships full `node_modules` (not Next standalone) so the
 container can run prisma/tsx for migrations and refreshes — simplicity over
-image size for a self-hosted tool.
+image size for a self-hosted tool. Demo data is baked at image-build time
+(deterministic mock refresh), so containers boot in seconds; the start command
+reseeds only when it finds an empty database (e.g. a fresh compose volume).
+
+## 2a. One-click public demo on Render (free tier)
+
+`render.yaml` in the repo root is a Render blueprint tuned for a portfolio
+demo:
+
+1. Open
+   <https://render.com/deploy?repo=https://github.com/hashmihamzah2002/InvestIQ-research-lab>
+   and sign in (GitHub SSO). Approve access to the repository.
+2. Render reads `render.yaml` → one free web service, Docker runtime,
+   **DEMO_MODE=1** preset. Click **Apply/Deploy** and wait for the first
+   image build (~5-10 minutes; it runs migrate + seed + mock refresh + the
+   Next build).
+3. The service URL (e.g. `https://investiq-research-lab.onrender.com`) is the
+   shareable demo link.
+
+What DEMO_MODE=1 does: hides Admin from the navigation, replaces `/admin`
+with a "disabled on this demo" notice, and returns 403 from every
+`/api/admin/*` route (refresh triggers, CSV imports) before any work happens.
+Visitor watchlist/portfolio edits still work but live on an ephemeral disk
+that resets at each deploy — stated on the lock page.
+
+Free-tier realities: the instance sleeps after ~15 idle minutes (first visit
+afterwards takes a few seconds thanks to baked data — no reseeding on boot),
+and 512MB RAM is enough for browsing but a long backtest under concurrent
+load may be slow.
+
+**Keeping the demo fresh (optional):** the daily GitHub Actions workflow can
+rebuild the demo every night so the baked snapshot and its freshness stamp
+never go stale: in Render, copy the service's **Deploy Hook** URL
+(Settings → Deploy Hook), then add it as the `RENDER_DEPLOY_HOOK` repository
+secret on GitHub. Without it, the demo simply shows its build date and the
+staleness banner after 36h — honest, but less polished.
 
 ## 3. Switching to PostgreSQL
 
